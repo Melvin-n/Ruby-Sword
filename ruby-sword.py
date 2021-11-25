@@ -2,8 +2,8 @@ import pygame
 import os
 
 # define size constants
-WIDTH = 900
-HEIGHT = 450
+WIDTH = 800
+HEIGHT = 350
 
 FPS = 60
 SPEED = 5
