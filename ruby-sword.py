@@ -34,8 +34,11 @@ bg = pygame.transform.scale(pygame.image.load(os.path.join('cs50-final','bg.png'
 
 
 
-default_sprite = pygame.transform.scale(pygame.image.load(os.path.join('cs50-final','defaultSprite.png')), (SPRITE_WIDTH, SPRITE_HEIGHT))
-default_sprite.set_colorkey(SPRITE_SHEET_BG)
+default_sprite_right = pygame.transform.scale(pygame.image.load(os.path.join('cs50-final', 'default-standing', 'standing-right.png')), (SPRITE_WIDTH, SPRITE_HEIGHT))
+default_sprite_left = pygame.transform.scale(pygame.image.load(os.path.join('cs50-final', 'default-standing', 'standing-left.png')), (SPRITE_WIDTH, SPRITE_HEIGHT))
+default_sprite_right.set_colorkey(SPRITE_SHEET_BG)
+default_sprite_left.set_colorkey(SPRITE_SHEET_BG)
+
 
 
 # import walking images
@@ -47,11 +50,14 @@ walk_left = [pygame.image.load(os.path.join('cs50-final', 'walking','L_0.png')),
             pygame.image.load(os.path.join('cs50-final', 'walking','L_5.png')), pygame.image.load(os.path.join('cs50-final', 'walking','L_6.png')), pygame.image.load(os.path.join('cs50-final', 'walking','L_7.png')), 
             pygame.image.load(os.path.join('cs50-final', 'walking','L_8.png'))]
 
+# variables for walking and direction, will need to be accessed globally
 walk_count = 0
+facing_right = True
 
 
 def draw_window(player, left, right):
     global walk_count
+    global facing_right
     screen.blit(bg, (0,0))
     # walk count will cycle through the list of images in walk_right/walk_left
     # when walk count exceeds images * frame per images, reset to 0 and restart the cycle
@@ -65,17 +71,20 @@ def draw_window(player, left, right):
         image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
         screen.blit(image, (player.x, player.y))
         walk_count += 1
-        print('right')
+        facing_right = True
     elif left:
         image = walk_left[walk_count//5]
         image.set_colorkey(SPRITE_SHEET_BG)
         image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
         screen.blit(image, (player.x, player.y))
         walk_count += 1
-        print('yes')
+        facing_right = False
     # if neither left or right is true, load default sprite
     else:
-        screen.blit(default_sprite, (player.x, player.y))
+        if facing_right:
+            screen.blit(default_sprite_right, (player.x, player.y))
+        else:
+            screen.blit(default_sprite_left, (player.x, player.y))
     pygame.display.update()
 
 
@@ -89,7 +98,6 @@ def main():
     # walking animation
     left = False
     right = False
-    
     
 
     while run:
