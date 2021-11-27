@@ -28,9 +28,6 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 # set caption
 pygame.display.set_caption('Ruby Sword')
 
-# variables for the sprite
-
-
 #get background image
 print(os.path.join('bg.png'))
 bg = pygame.transform.scale(pygame.image.load(os.path.join('bg.png')), (WIDTH, HEIGHT))
@@ -126,14 +123,12 @@ attack_right = [pygame.image.load(os.path.join( 'attacking','attack_R0.png')), p
                 pygame.image.load(os.path.join( 'attacking','attack_R3.png')), pygame.image.load(os.path.join( 'attacking','attack_R4.png')), pygame.image.load(os.path.join( 'attacking','attack_R5.png'))]
 
 
-
 #because attacking sprites are larger, need to offset them so they load in the same position as the default sprite
 attack_sprite_offset = SPRITE_WIDTH
 
 
 #draw function will draw the screen and the players actions
 def draw_window(sprite, screen):
-
     screen.blit(bg, (0,0))
     sprite.draw(screen)             
     pygame.display.update()
@@ -142,17 +137,13 @@ def draw_window(sprite, screen):
 def main():
     run = True
     clock = pygame.time.Clock()
- 
-    # walking animation
-    
-    
+
     #main loop for running the game
     while run:
         clock = pygame.time.Clock()
         clock.tick(FPS)
         draw_window(sprite, screen)
         keys_pressed = pygame.key.get_pressed()
-        print(sprite.x)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -186,8 +177,7 @@ def main():
                 elif(pygame.key.name(event.key) == 'right'):
                     sprite.right = False
                 #check for attack key press
-                elif(pygame.key.name(event.key) == 'space'):
-                    sprite.attack = False
+                
 
         #check for jump
         if sprite.is_jump == False and keys_pressed[pygame.K_UP]:
