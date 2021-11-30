@@ -10,6 +10,7 @@ HEIGHT = 350
 
 FPS = 60
 SPEED = 5
+LIZARD_SPEED = 3
 
 # color variables
 WHITE = (0, 255, 255)
@@ -54,6 +55,9 @@ class player(object):
         self.walk_count = 0
         self.facing_right = True
         self.attack_frame = 0
+        self.hitbox = (self.x + 15, self.y, 35, 80)
+        self.hurtbox = (self.x + 15, self.y, 35, 80)
+
     
     def draw(self, screen):
         # walk count will cycle through the list of images in walk_right/walk_left
@@ -62,14 +66,18 @@ class player(object):
             self.walk_count = 0
         if self.attack:
             #when attack is set to true (via spacebar) attack images are loaded and cycled through. images depend on which way self is facing
-            if self.facing_right and self.attack_frame < 25:
-                image = attack_right[self.attack_frame//5]
+            if self.facing_right and self.attack_frame < 15:
+                self.hitbox = (self.x + 60, self.y, 80, 80)
+                self.hurtbox = (self.x + 20, self.y, 40, 80)
+                image = attack_right[self.attack_frame//3]
                 image.set_colorkey(SPRITE_SHEET_BG)
                 image = pygame.transform.scale(image, (SPRITE_WIDTH * 3, SPRITE_HEIGHT))
                 screen.blit(image, (self.x - attack_sprite_offset, self.y))
                 self.attack_frame += 1
-            elif not self.facing_right and self.attack_frame < 25:
-                image = attack_left[self.attack_frame//5]
+            elif not self.facing_right and self.attack_frame < 15:
+                self.hitbox = (self.x - 60, self.y, 80, 80)
+                self.hurtbox = (self.x + 20, self.y, 40, 80)
+                image = attack_left[self.attack_frame//3]
                 image.set_colorkey(SPRITE_SHEET_BG)
                 image = pygame.transform.scale(image, (SPRITE_WIDTH * 3, SPRITE_HEIGHT))
                 screen.blit(image, (self.x - attack_sprite_offset, self.y))
@@ -104,14 +112,78 @@ class player(object):
             else:
                 screen.blit(default_sprite_left, (self.x, self.y))
 
+        # set the hitbox for character on each redraw
+        pygame.draw.rect(screen, (255, 0, 0), (self.hitbox), 2)
+        pygame.draw.rect(screen, (0, 255, 0), (self.hurtbox), 2)
+        self.hitbox = (self.x + 15, self.y, 50, 80)
+        self.hurtbox = (self.x + 15, self.y, 50, 80)
+
+
+
+#lizard enemy object
+class lizard(object):
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.alive = True
+        self.walk_count = 0
+        self.left = False
+        self.right = True
+        self.hitbox = (self.x + 20, self.y, 40, 80)
+    
+    def draw(self, screen):
+        if self.x > 750:
+            self.left = True
+            self.right = False
+        elif self.x < 380:
+            self.left = False
+            self.right = True
+        if self.walk_count + 1 >= 45:
+            self.walk_count = 0
+        if self.alive and self.right:
+            self.x += LIZARD_SPEED
+            image = lizard_walk_right[self.walk_count//5]
+            image.set_colorkey(SPRITE_SHEET_BG)
+            image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
+            screen.blit(image, (self.x, self.y))
+            self.walk_count += 1
+            self.right = True
+        elif self.alive and self.left:
+            self.x -= LIZARD_SPEED 
+            image = lizard_walk_left[self.walk_count//5]
+            image.set_colorkey(SPRITE_SHEET_BG)
+            image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
+            screen.blit(image, (self.x, self.y))
+            self.walk_count += 1
+        
+        # set the hitbox for character on each redraw  
+        self.hitbox = (self.x + 20, self.y, 40, 80)
+        pygame.draw.rect(screen, (255, 0, 0), (self.x + 20, self.y, 40, 80), 2)
+
+
+
+green_lizard = lizard(351, HEIGHT - 80, 80, 80)
+
+
+
+# def check_for_hit(sprite, green_lizard):
+#     if sprite.attack and sprite.hitbox.x:
+#         print('hit')
+#     elif not sprite.attack and sprite.x < green_lizard.x and sprite.x + (sprite.width) > green_lizard.x:
+#         print('lose')
+
 
 sprite = player(200, HEIGHT - 80, 80, 80)   
 # import walking images
-walk_right = [pygame.image.load(os.path.join( 'walking','R_0.png')), pygame.image.load(os.path.join( 'walking','R_1.png')), pygame.image.load(os.path.join( 'walking','R_2.png')), pygame.image.load(os.path.join( 'walking','R_3.png')), pygame.image.load(os.path.join( 'walking','R_4.png')),
+walk_right = [pygame.image.load(os.path.join( 'walking','R_0.png')), pygame.image.load(os.path.join( 'walking','R_1.png')), pygame.image.load(os.path.join( 'walking','R_2.png')), 
+            pygame.image.load(os.path.join( 'walking','R_3.png')), pygame.image.load(os.path.join( 'walking','R_4.png')),
             pygame.image.load(os.path.join( 'walking','R_5.png')), pygame.image.load(os.path.join( 'walking','R_6.png')), pygame.image.load(os.path.join( 'walking','R_7.png')), 
             pygame.image.load(os.path.join( 'walking','R_8.png'))]
 
-walk_left = [pygame.image.load(os.path.join( 'walking','L_0.png')), pygame.image.load(os.path.join( 'walking','L_1.png')), pygame.image.load(os.path.join( 'walking','L_2.png')), pygame.image.load(os.path.join( 'walking','L_3.png')), pygame.image.load(os.path.join( 'walking','L_4.png')),
+walk_left = [pygame.image.load(os.path.join( 'walking','L_0.png')), pygame.image.load(os.path.join( 'walking','L_1.png')), pygame.image.load(os.path.join( 'walking','L_2.png')), 
+            pygame.image.load(os.path.join( 'walking','L_3.png')), pygame.image.load(os.path.join( 'walking','L_4.png')),
             pygame.image.load(os.path.join( 'walking','L_5.png')), pygame.image.load(os.path.join( 'walking','L_6.png')), pygame.image.load(os.path.join( 'walking','L_7.png')), 
             pygame.image.load(os.path.join( 'walking','L_8.png'))]
 
@@ -126,12 +198,26 @@ attack_right = [pygame.image.load(os.path.join( 'attacking','attack_R0.png')), p
 #because attacking sprites are larger, need to offset them so they load in the same position as the default sprite
 attack_sprite_offset = SPRITE_WIDTH
 
+#import lizard enemy images
+lizard_walk_right = [pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R0.png')), pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R1.png')), pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R2.png')),
+            pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R3.png')), pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R4.png')),
+            pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R5.png')), pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R6.png')), pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R7.png')), 
+            pygame.image.load(os.path.join( 'enemy_walk_right','enemy_R8.png'))]
+
+lizard_walk_left = [pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L0.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L1.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L2.png')),
+            pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L3.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L4.png')),
+            pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L5.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L6.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L7.png')), 
+            pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L8.png'))]
+
 
 #draw function will draw the screen and the players actions
-def draw_window(sprite, screen):
+def draw_window(sprite, green_lizard, screen):
     screen.blit(bg, (0,0))
-    sprite.draw(screen)             
+    sprite.draw(screen)
+    green_lizard.draw(screen) 
+             
     pygame.display.update()
+
 
 
 def main():
@@ -142,7 +228,8 @@ def main():
     while run:
         clock = pygame.time.Clock()
         clock.tick(FPS)
-        draw_window(sprite, screen)
+        draw_window(sprite, green_lizard, screen)
+        # check_for_hit(sprite, green_lizard)
         keys_pressed = pygame.key.get_pressed()
 
         for event in pygame.event.get():
