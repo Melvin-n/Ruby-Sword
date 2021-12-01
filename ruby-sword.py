@@ -14,7 +14,7 @@ HEIGHT = 350
 FPS = 60
 SPEED = 5
 LIZARD_SPEED = 3
-
+SPAWN_TIME = 3000
 # color variables
 WHITE = (0, 255, 255)
 BLACK = (0, 0, 0)
@@ -140,10 +140,10 @@ class lizard(object):
     
 
     def draw(self, screen):
-        if self.x > 750:
+        if self.x == 750:
             self.left = True
             self.right = False
-        elif self.x < 380:
+        elif self.x == 0:
             self.left = False
             self.right = True
         if self.walk_count + 1 >= 45:
@@ -180,7 +180,7 @@ lizard_list = []
 
 
 SPAWNENEMY = pygame.USEREVENT
-pygame.time.set_timer(SPAWNENEMY, 3000)
+pygame.time.set_timer(SPAWNENEMY, SPAWN_TIME)
 
 
 
@@ -197,7 +197,7 @@ def check_for_hit(sprite, enemy):
         enemy.alive = False
         kill = True
     # if facing left and enemy hit box is more than end of sprite hitbox and less than start of sprite hitbox
-    if sprite.attack and enemy.hitbox[0] > sprite.hitbox[0] - 80 and enemy.hitbox[0]  < sprite.hitbox[0] and sprite.y == enemy.y:
+    if sprite.attack and not sprite.facing_right and enemy.hitbox[0] > sprite.hitbox[0] - 80 and enemy.hitbox[0]  < sprite.hitbox[0] and sprite.y == enemy.y:
         pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)
         
         enemy.alive = False 
@@ -260,16 +260,26 @@ def draw_window(sprite, green_lizard, screen):
 green_lizard = lizard(351 , HEIGHT - 80, 80, 80)
 
 # create more enemies, this is called whenever SPAWNENEMY event is triggered, currently set to trigger every 3 secs
-def create_enemy():
+def create_enemy(SPAWN_TIME, LIZARD_SPEED):
     if len(lizard_list) <= 1:
-        green_lizard3 = lizard(351 , HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard3)
+        green_lizard7 = lizard(0 , HEIGHT - 80, 80, 80)
+        lizard_list.append(green_lizard7)
+    elif len(lizard_list) >= 6:
+        SPAWN_TIME = 2000
+        green_lizard6 = lizard(400, HEIGHT - 80, 80, 80)
+        lizard_list.append(green_lizard6)
+    elif len(lizard_list) >= 4:
+        green_lizard4 = lizard(0, HEIGHT - 80, 80, 80)
+        green_lizard5 = lizard(750, HEIGHT - 80, 80, 80)
+        lizard_list.append(green_lizard4)
+        lizard_list.append(green_lizard5)
     elif len(lizard_list) > 3:
-        green_lizard2 = lizard(351 + 40, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard2)
+        green_lizard3 = lizard(351, HEIGHT - 80, 80, 80)
+        lizard_list.append(green_lizard3)
     elif len(lizard_list) >= 2:
-        green_lizard1 = lizard(351 + 20, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard1)
+        green_lizard2 = lizard(750, HEIGHT - 80, 80, 80)
+        lizard_list.append(green_lizard2)
+
     
 
 
@@ -290,7 +300,7 @@ def main():
                 pygame.quit()
         
             if event.type == SPAWNENEMY:
-                create_enemy()
+                create_enemy(SPAWN_TIME, LIZARD_SPEED)
                 print('spawn')
 
     
