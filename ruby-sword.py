@@ -2,7 +2,9 @@ import pygame
 import os
 from pygame.locals import *
 import sys
+import time
  
+pygame.init()
 
 # define size constants
 WIDTH = 800
@@ -132,7 +134,10 @@ class lizard(object):
         self.left = False
         self.right = True
         self.hitbox = (self.x + 20, self.y, 40, 80)
+        self.alive = True
+
     
+
     def draw(self, screen):
         if self.x > 750:
             self.left = True
@@ -162,17 +167,30 @@ class lizard(object):
         self.hitbox = (self.x + 20, self.y, 40, 80)
         pygame.draw.rect(screen, (255, 0, 0), (self.x + 20, self.y, 40, 80), 2)
 
+        if not self.alive:
+            del self
+
 
 
 green_lizard = lizard(351, HEIGHT - 80, 80, 80)
 
+lizard_list = []
+
+for i in range(10):
+    green_lizard1 = lizard(351 + (i * 20), HEIGHT - 80, 80, 80)
+    lizard_list.append(green_lizard1)
+    print(lizard_list)
+SPAWNENEMY = pygame.USEREVENT
 
 
-# def check_for_hit(sprite, green_lizard):
-#     if sprite.attack and sprite.hitbox.x:
-#         print('hit')
-#     elif not sprite.attack and sprite.x < green_lizard.x and sprite.x + (sprite.width) > green_lizard.x:
-#         print('lose')
+
+def check_for_hit(sprite, green_lizard):
+    if sprite.attack and green_lizard.hitbox[0]  < sprite.hitbox[0] + sprite.hitbox[2] and green_lizard.hitbox[0] + green_lizard.hitbox[2] / 2 > sprite.hitbox[0]:
+         pygame.draw.rect(screen, (0, 0, 255), (green_lizard.x + 20, green_lizard.y, 40, 140), 5)
+         print(sprite.hitbox[0])
+         green_lizard.alive = False
+    # elif not sprite.attack and sprite.x < green_lizard.x and sprite.x + (sprite.width) > green_lizard.x:
+    #     print('lose')
 
 
 sprite = player(200, HEIGHT - 80, 80, 80)   
@@ -209,35 +227,47 @@ lizard_walk_left = [pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L0.
             pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L5.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L6.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L7.png')), 
             pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L8.png'))]
 
+green_lizard1 = lizard(381, HEIGHT - 80, 80, 80)
 
 #draw function will draw the screen and the players actions
-def draw_window(sprite, green_lizard, screen):
+def draw_window(sprite, green_lizard, screen, lizard_list):
     screen.blit(bg, (0,0))
     sprite.draw(screen)
+    lizard_list[2].draw(screen)
     green_lizard.draw(screen) 
-             
+    green_lizard1.draw(screen) 
+    
     pygame.display.update()
 
+def createEnemy(screen):
+    green_lizard1 = lizard(351, HEIGHT - 80, 80, 80)
+    green_lizard1.draw(screen) 
 
 
 def main():
     run = True
     clock = pygame.time.Clock()
-
+    
+    green_lizard1 = lizard(351, HEIGHT - 80, 80, 80)
+    green_lizard1.draw(screen) 
     #main loop for running the game
     while run:
         clock = pygame.time.Clock()
         clock.tick(FPS)
-        draw_window(sprite, green_lizard, screen)
-        # check_for_hit(sprite, green_lizard)
+        draw_window(sprite, green_lizard, screen,lizard_list)
+        check_for_hit(sprite, green_lizard)
         keys_pressed = pygame.key.get_pressed()
+        pygame.time.set_timer(SPAWNENEMY,1000)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
         
- 
+            if event.type == SPAWNENEMY:
+                print('spawn')
+                createEnemy(screen)
+    
         # sprite_movement(keys_pressed, player)
         # left and right flags are used for walk animations
         # attack flag is also, used, below is logic so that sprite can't attack while walking. pressing atk button while stop walk
