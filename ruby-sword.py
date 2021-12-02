@@ -11,10 +11,14 @@ pygame.init()
 WIDTH = 800
 HEIGHT = 350
 
+# FPS and player speed
 FPS = 60
 SPEED = 5
-LIZARD_SPEED = 3
-SPAWN_TIME = 3000
+
+# speed and spawn time for enemies, will change in further levels of the game
+lizard_speed = 3
+spawn_time = 3000
+
 # color variables
 WHITE = (0, 255, 255)
 BLACK = (0, 0, 0)
@@ -140,16 +144,16 @@ class lizard(object):
     
 
     def draw(self, screen):
-        if self.x == 750:
+        if self.x > 750:
             self.left = True
             self.right = False
-        elif self.x == 0:
+        elif self.x < 0:
             self.left = False
             self.right = True
         if self.walk_count + 1 >= 45:
             self.walk_count = 0
         if self.alive and self.right:
-            self.x += LIZARD_SPEED
+            self.x += lizard_speed
             image = lizard_walk_right[self.walk_count//5]
             image.set_colorkey(SPRITE_SHEET_BG)
             image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
@@ -157,7 +161,7 @@ class lizard(object):
             self.walk_count += 1
             self.right = True
         elif self.alive and self.left:
-            self.x -= LIZARD_SPEED 
+            self.x -= lizard_speed 
             image = lizard_walk_left[self.walk_count//5]
             image.set_colorkey(SPRITE_SHEET_BG)
             image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
@@ -178,30 +182,30 @@ class lizard(object):
 lizard_list = []
 
 
-
-SPAWNENEMY = pygame.USEREVENT
-pygame.time.set_timer(SPAWNENEMY, SPAWN_TIME)
-
+kill_list = []
 
 
 
 
 #logic for checking hitbox collisions
 def check_for_hit(sprite, enemy):
-    global enemies_killed
+    
     # if start enemey hit box is less than end of sprite hit box and end of enemy hitbox is more than start of sprite hit box
+    
     if sprite.attack and sprite.facing_right and enemy.hitbox[0] < sprite.hitbox[0] + 80 and enemy.hitbox[0] > sprite.hitbox[0] and sprite.y == enemy.y:
         
         pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)
         
         enemy.alive = False
-        kill = True
+        kill_list.append(enemy)
     # if facing left and enemy hit box is more than end of sprite hitbox and less than start of sprite hitbox
     if sprite.attack and not sprite.facing_right and enemy.hitbox[0] > sprite.hitbox[0] - 80 and enemy.hitbox[0]  < sprite.hitbox[0] and sprite.y == enemy.y:
         pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)
         
         enemy.alive = False 
-        kill = True
+        kill_list.append(enemy)
+        
+    
 
     # elif not sprite.attack and sprite.x < green_lizard.x and sprite.x + (sprite.width) > green_lizard.x:
     #     print('lose')
@@ -242,30 +246,42 @@ lizard_walk_left = [pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L0.
             pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L5.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L6.png')), pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L7.png')), 
             pygame.image.load(os.path.join( 'enemy_walk_left','enemy_L8.png'))]
 
+# get the score by checking how many in lizard list are !alive
+def check_score():
+    score = 0
+    for lizard in lizard_list:
+        if not lizard.alive:
+            score += 1
+    return score
 
-
+myfont = pygame.font.SysFont("monospace", 60)
 
 #draw function will draw the screen and the players actions
-def draw_window(sprite, green_lizard, screen):
+def draw_window(sprite, score, screen):
     screen.blit(bg, (0,0))
     sprite.draw(screen)
     # draw each enemy which is in the lizard_list, which is being updated on SPAWNENEMY event, also check for hit of each enemy
     for liz in lizard_list:
         liz.draw(screen)
         check_for_hit(sprite, liz)
- 
+    # display score
+    score_display = myfont.render(str(score), True, (255, 255, 255))
+    screen.blit(score_display, (100, 100))
+
     pygame.display.update()
 
 # define inital enemy
 green_lizard = lizard(351 , HEIGHT - 80, 80, 80)
 
+spawn_time = 3000
 # create more enemies, this is called whenever SPAWNENEMY event is triggered, currently set to trigger every 3 secs
-def create_enemy(SPAWN_TIME, LIZARD_SPEED):
+def create_enemy(time):
     if len(lizard_list) <= 1:
         green_lizard7 = lizard(0 , HEIGHT - 80, 80, 80)
         lizard_list.append(green_lizard7)
+        print(time)
     elif len(lizard_list) >= 6:
-        SPAWN_TIME = 2000
+        spawn_time = 2000
         green_lizard6 = lizard(400, HEIGHT - 80, 80, 80)
         lizard_list.append(green_lizard6)
     elif len(lizard_list) >= 4:
@@ -274,34 +290,45 @@ def create_enemy(SPAWN_TIME, LIZARD_SPEED):
         lizard_list.append(green_lizard4)
         lizard_list.append(green_lizard5)
     elif len(lizard_list) > 3:
+        time = 1000
         green_lizard3 = lizard(351, HEIGHT - 80, 80, 80)
         lizard_list.append(green_lizard3)
     elif len(lizard_list) >= 2:
         green_lizard2 = lizard(750, HEIGHT - 80, 80, 80)
         lizard_list.append(green_lizard2)
 
-    
+SPAWNENEMY = pygame.USEREVENT
+pygame.time.set_timer(SPAWNENEMY, spawn_time)
+
+
 
 
 def main():
     run = True
     clock = pygame.time.Clock()
+    spawn_time = 3000
+    
+    
     #main loop for running the game
     while run:
         clock = pygame.time.Clock()
         clock.tick(FPS)
-        draw_window(sprite, green_lizard, screen)
+        score = check_score()
+        draw_window(sprite, score, screen)
         check_for_hit(sprite, green_lizard)
         keys_pressed = pygame.key.get_pressed()
-
+        
+        
+        
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
         
             if event.type == SPAWNENEMY:
-                create_enemy(SPAWN_TIME, LIZARD_SPEED)
-                print('spawn')
+                create_enemy(spawn_time)
+                print(score)
 
     
         # sprite_movement(keys_pressed, player)
