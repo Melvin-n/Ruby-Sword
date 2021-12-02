@@ -64,60 +64,62 @@ class player(object):
         self.attack_frame = 0
         self.hitbox = (self.x + 15, self.y, 35, 80)
         self.hurtbox = (self.x + 15, self.y, 35, 80)
+        self.alive = True
 
     
     def draw(self, screen):
         # walk count will cycle through the list of images in walk_right/walk_left
         # when walk count exceeds images * frame per images, reset to 0 and restart the cycle
-        if self.walk_count + 1 >= 45:
-            self.walk_count = 0
-        if self.attack:
-            #when attack is set to true (via spacebar) attack images are loaded and cycled through. images depend on which way self is facing
-            if self.facing_right and self.attack_frame < 15:
-                self.hitbox = (self.x + 60, self.y, 80, 80)
-                self.hurtbox = (self.x + 20, self.y, 40, 80)
-                image = attack_right[self.attack_frame//3]
+        if self.alive:
+            if self.walk_count + 1 >= 45:
+                self.walk_count = 0
+            if self.attack:
+                #when attack is set to true (via spacebar) attack images are loaded and cycled through. images depend on which way self is facing
+                if self.facing_right and self.attack_frame < 15:
+                    self.hitbox = (self.x + 60, self.y, 80, 80)
+                    self.hurtbox = (self.x + 20, self.y, 40, 80)
+                    image = attack_right[self.attack_frame//3]
+                    image.set_colorkey(SPRITE_SHEET_BG)
+                    image = pygame.transform.scale(image, (SPRITE_WIDTH * 3, SPRITE_HEIGHT))
+                    screen.blit(image, (self.x - attack_sprite_offset, self.y))
+                    self.attack_frame += 1
+                elif not self.facing_right and self.attack_frame < 15:
+                    self.hitbox = (self.x - 60, self.y, 80, 80)
+                    self.hurtbox = (self.x + 20, self.y, 40, 80)
+                    image = attack_left[self.attack_frame//3]
+                    image.set_colorkey(SPRITE_SHEET_BG)
+                    image = pygame.transform.scale(image, (SPRITE_WIDTH * 3, SPRITE_HEIGHT))
+                    screen.blit(image, (self.x - attack_sprite_offset, self.y))
+                    self.attack_frame += 1
+                # when all 25 frames have been used, set attack to false. this is to prevent animation loop. frames reset to 0 when attack key is pressed
+                else:
+                    self.attack = False
+            # if either left or right are true (when left/right keys are pressed), the images from corressponding list will load and cycle through as per walk_count
+            # each image is shown for 5 frames as per the integer division
+            # players x position will also moved by SPEED pixels in either direction
+            elif self.right and self.x < WIDTH - SPRITE_WIDTH:
+                self.x += SPEED
+                image = walk_right[self.walk_count//5]
                 image.set_colorkey(SPRITE_SHEET_BG)
-                image = pygame.transform.scale(image, (SPRITE_WIDTH * 3, SPRITE_HEIGHT))
-                screen.blit(image, (self.x - attack_sprite_offset, self.y))
-                self.attack_frame += 1
-            elif not self.facing_right and self.attack_frame < 15:
-                self.hitbox = (self.x - 60, self.y, 80, 80)
-                self.hurtbox = (self.x + 20, self.y, 40, 80)
-                image = attack_left[self.attack_frame//3]
+                image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
+                screen.blit(image, (self.x, self.y))
+                self.walk_count += 1
+                self.facing_right = True
+            elif self.left and self.x > 0:
+                self.x -= SPEED 
+                image = walk_left[self.walk_count//5]
                 image.set_colorkey(SPRITE_SHEET_BG)
-                image = pygame.transform.scale(image, (SPRITE_WIDTH * 3, SPRITE_HEIGHT))
-                screen.blit(image, (self.x - attack_sprite_offset, self.y))
-                self.attack_frame += 1
-            # when all 25 frames have been used, set attack to false. this is to prevent animation loop. frames reset to 0 when attack key is pressed
+                image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
+                screen.blit(image, (self.x, self.y))
+                self.walk_count += 1
+                self.facing_right = False   
+            
+            # if neither left or right or attack is true, load default self
             else:
-                self.attack = False
-        # if either left or right are true (when left/right keys are pressed), the images from corressponding list will load and cycle through as per walk_count
-        # each image is shown for 5 frames as per the integer division
-        # players x position will also moved by SPEED pixels in either direction
-        elif self.right and self.x < WIDTH - SPRITE_WIDTH:
-            self.x += SPEED
-            image = walk_right[self.walk_count//5]
-            image.set_colorkey(SPRITE_SHEET_BG)
-            image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
-            screen.blit(image, (self.x, self.y))
-            self.walk_count += 1
-            self.facing_right = True
-        elif self.left and self.x > 0:
-            self.x -= SPEED 
-            image = walk_left[self.walk_count//5]
-            image.set_colorkey(SPRITE_SHEET_BG)
-            image = pygame.transform.scale(image, (SPRITE_WIDTH, SPRITE_HEIGHT))
-            screen.blit(image, (self.x, self.y))
-            self.walk_count += 1
-            self.facing_right = False   
-        
-        # if neither left or right or attack is true, load default self
-        else:
-            if self.facing_right:
-                screen.blit(default_sprite_right, (self.x, self.y))
-            else:
-                screen.blit(default_sprite_left, (self.x, self.y))
+                if self.facing_right:
+                    screen.blit(default_sprite_right, (self.x, self.y))
+                else:
+                    screen.blit(default_sprite_left, (self.x, self.y))
 
         # set the hitbox for character on each redraw
         pygame.draw.rect(screen, (255, 0, 0), (self.hitbox), 2)
@@ -181,29 +183,23 @@ class lizard(object):
 
 lizard_list = []
 
-
-kill_list = []
-
-
-
-
 #logic for checking hitbox collisions
 def check_for_hit(sprite, enemy):
     
     # if start enemey hit box is less than end of sprite hit box and end of enemy hitbox is more than start of sprite hit box
     
-    if sprite.attack and sprite.facing_right and enemy.hitbox[0] < sprite.hitbox[0] + 80 and enemy.hitbox[0] > sprite.hitbox[0] and sprite.y == enemy.y:
-        
-        pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)
-        
+    if sprite.attack and sprite.facing_right and enemy.hitbox[0] < sprite.hitbox[0] + 80 and enemy.hitbox[0] > sprite.hitbox[0] and sprite.y == enemy.y:       
+        pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)        
         enemy.alive = False
-        kill_list.append(enemy)
     # if facing left and enemy hit box is more than end of sprite hitbox and less than start of sprite hitbox
     if sprite.attack and not sprite.facing_right and enemy.hitbox[0] > sprite.hitbox[0] - 80 and enemy.hitbox[0]  < sprite.hitbox[0] and sprite.y == enemy.y:
-        pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)
-        
+        pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)      
         enemy.alive = False 
-        kill_list.append(enemy)
+    if sprite.hurtbox[0] > enemy.hitbox[0] and sprite.hurtbox[0] < enemy.hitbox[0] + 40 and sprite.y == enemy.y:
+        sprite.alive = False
+    if sprite.hurtbox[0] + 50 > enemy.hitbox[0] and sprite.hurtbox[0] + 50 < enemy.hitbox[0] + 40 and sprite.y == enemy.y:
+        sprite.alive = False
+
         
     
 
@@ -262,8 +258,9 @@ def draw_window(sprite, score, screen):
     sprite.draw(screen)
     # draw each enemy which is in the lizard_list, which is being updated on SPAWNENEMY event, also check for hit of each enemy
     for liz in lizard_list:
-        liz.draw(screen)
-        check_for_hit(sprite, liz)
+        if liz.alive:
+            liz.draw(screen)
+            check_for_hit(sprite, liz)
     # display score
     score_display = myfont.render(str(score), True, (255, 255, 255))
     screen.blit(score_display, (100, 100))
@@ -271,7 +268,7 @@ def draw_window(sprite, score, screen):
     pygame.display.update()
 
 # define inital enemy
-green_lizard = lizard(351 , HEIGHT - 80, 80, 80)
+# green_lizard = lizard(351 , HEIGHT - 80, 80, 80)
 
 spawn_time = 3000
 # create more enemies, this is called whenever SPAWNENEMY event is triggered, currently set to trigger every 3 secs
@@ -315,7 +312,6 @@ def main():
         clock.tick(FPS)
         score = check_score()
         draw_window(sprite, score, screen)
-        check_for_hit(sprite, green_lizard)
         keys_pressed = pygame.key.get_pressed()
         
         
