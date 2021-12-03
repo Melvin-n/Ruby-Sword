@@ -1,9 +1,8 @@
 import pygame
 import os
 from pygame.locals import *
-import sys
 import time
-import asyncio
+import random
  
 pygame.init()
 
@@ -20,6 +19,7 @@ spawn_time = 2500
 spawn_fast = 1750
 spawn_fastest = 1250
 spawn_extreme = 750
+spawn_impossible = 450
 SPAWNENEMY = pygame.USEREVENT
 pygame.time.set_timer(SPAWNENEMY, spawn_time)
 timenow = time.time()
@@ -256,7 +256,10 @@ def check_score():
             score += 1
     return score
 
-myfont = pygame.font.SysFont("monospace", 60)
+score_font = pygame.font.SysFont("bookmanoldstyle", 25)
+lose_font = pygame.font.SysFont("bookmanoldstyle", 40)
+title_font = pygame.font.SysFont("bookmanoldstyle", 60)
+intro_font = pygame.font.SysFont("bookmanoldstyle", 30)
 
 #draw function will draw the screen and the players actions
 def draw_window(sprite, score, screen):
@@ -270,108 +273,68 @@ def draw_window(sprite, score, screen):
             if liz.alive:
                 if lizard_list.index(liz) > 18:
                     liz.speed = 6
-                if lizard_list.index(liz) > 12:
+                if lizard_list.index(liz) > 10:
                     liz.speed = 5
-                if lizard_list.index(liz) > 5:
+                if lizard_list.index(liz) > 3:
                     liz.speed = 4
                 liz.draw(screen)
                 check_for_hit(sprite, liz)
                 
         # display score
-        score_display = myfont.render(str(score), True, (255, 255, 255))
-        screen.blit(score_display, (100, 100))
+        score_display = score_font.render(f'Score: {str(score)}', True, (255, 255, 255))
+        screen.blit(score_display, (40, 40))
     if not sprite.alive:
         
-        score_display = myfont.render(f'You lose!, Final score:{str(score)}', True, (255, 255, 255))
-        screen.blit(score_display, (400, 150))
+        lose_text = lose_font.render(f'Game over!', True, (255, 255, 255))
+        final_score = lose_font.render(f'Final score: {str(score)}', True, (255, 255, 255))
+        screen.blit(lose_text, (280, 120))
+        screen.blit(final_score, (260, 170))
+
+    if not game_start:
+        title_text = title_font.render('Ruby Sword', True, (255, 255, 255)) 
+        intro1_text = intro_font.render('The lizard race has taken over!')
+        intro2_text = intro_font.render('You have been gifted with the only weapon which can defeat them - the Ruby Sword')
+        enter_to_start_text = intro_font.render('Press enter to start...')
+        screen.blit(title_text, (250, 40))
+        screen.blit(intro1_text, (200, 120))
+        screen.blit(intro2_text, (160, 1700))
+        screen.blit(enter_to_start_text, (1210, 230))
+
     pygame.display.update()
+
+
 
 # define inital enemy
 # green_lizard = lizard(351 , HEIGHT - 80, 80, 80)
 
 # create more enemies, this is called whenever SPAWNENEMY event is triggered
-# based on the number of enemies so far, the area and spawn speed of the enemies is set
+# 3 types of spawns, left side, right side, or both sides. decided by randomiser each time. 
+# spawn speed increases as amount of kills grows
 def create_enemy():
-    print(len(lizard_list))
-    if len(lizard_list) > 30:
+    enemy_spawn_type = random.randint(1, 3)
+    if len(lizard_list) > 35:
+        pygame.time.set_timer(SPAWNENEMY, spawn_impossible)
+    elif len(lizard_list) > 20:
         pygame.time.set_timer(SPAWNENEMY, spawn_extreme)
+    elif len(lizard_list) > 12:
+        pygame.time.set_timer(SPAWNENEMY, spawn_fastest)
+    elif len(lizard_list) > 5:
+        pygame.time.set_timer(SPAWNENEMY, spawn_fast)
+    
+    
+    if enemy_spawn_type  == 1:
+        green_lizard28 = lizard(750, HEIGHT - 80, 80, 80) 
+        lizard_list.append(green_lizard28)
+    elif enemy_spawn_type  == 2: 
+        green_lizard27 = lizard(0, HEIGHT - 80, 80, 80) 
+        lizard_list.append(green_lizard27)
+    elif enemy_spawn_type  == 3:
         green_lizard31 = lizard(0, HEIGHT - 80, 80, 80)
         green_lizard32 = lizard(750, HEIGHT - 80, 80, 80)
         lizard_list.append(green_lizard32)
         lizard_list.append(green_lizard31)
-    elif len(lizard_list) >= 28:
-        pygame.time.set_timer(SPAWNENEMY, spawn_extreme)
-        green_lizard28 = lizard(750, HEIGHT - 80, 80, 80) 
-        lizard_list.append(green_lizard28)
-    elif len(lizard_list) >= 26:
-        pygame.time.set_timer(SPAWNENEMY, spawn_extreme)
-        green_lizard27 = lizard(0, HEIGHT - 80, 80, 80) 
-        lizard_list.append(green_lizard27)
-    elif len(lizard_list) >= 25:
-        pygame.time.set_timer(SPAWNENEMY, spawn_extreme)
-        green_lizard26 = lizard(0, HEIGHT - 80, 80, 80) 
-        lizard_list.append(green_lizard26)
-    elif len(lizard_list) >= 18:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fastest)
-        green_lizard18 = lizard(0, HEIGHT - 80, 80, 80)
-        green_lizard19 = lizard(750, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard18)
-        lizard_list.append(green_lizard19)
-    elif len(lizard_list) >= 16:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fastest)
-        green_lizard17 = lizard(0, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard17)
-    elif len(lizard_list) >= 15:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fastest)
-        green_lizard16 = lizard(750, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard16)
-    elif len(lizard_list) >= 14:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fastest)
-        green_lizard15 = lizard(750, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard15)
-    elif len(lizard_list) >= 12:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fast)
-        green_lizard13 = lizard(750, HEIGHT - 80, 80, 80)
-        green_lizard14 = lizard(0 , HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard13)
-        lizard_list.append(green_lizard14)
-    elif len(lizard_list) >= 10:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fast)
-        green_lizard11 = lizard(750, HEIGHT - 80, 80, 80)
-        green_lizard12 = lizard(0 , HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard11)
-        lizard_list.append(green_lizard12)
-    elif len(lizard_list) >= 9:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fast)
-        green_lizard10 = lizard(750, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard10)
-    elif len(lizard_list) >= 8:
-        pygame.time.set_timer(SPAWNENEMY, spawn_fast)
-        green_lizard9 = lizard(0 , HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard9) 
-    elif len(lizard_list) >= 6:  
-        green_lizard7 = lizard(750, HEIGHT - 80, 80, 80)
-        green_lizard8 = lizard(0, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard7) 
-        lizard_list.append(green_lizard8)  
-    elif len(lizard_list) >= 4:
-        green_lizard5 = lizard(750, HEIGHT - 80, 80, 80)
-        green_lizard6 = lizard(0, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard5) 
-        lizard_list.append(green_lizard6) 
-    elif len(lizard_list) >= 3:
-        green_lizard4 = lizard(750, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard4)
-    elif len(lizard_list) >= 2:
-        green_lizard3 = lizard(750, HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard3)
-    elif len(lizard_list) >= 1:
-        green_lizard2 = lizard(0 , HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard2)
-    elif len(lizard_list) == 0:
-        green_lizard1 = lizard(0 , HEIGHT - 80, 80, 80)
-        lizard_list.append(green_lizard1)
 
+    
 
 
 def main():
@@ -440,3 +403,5 @@ def main():
 
 
 main()
+
+
