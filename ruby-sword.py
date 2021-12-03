@@ -19,10 +19,15 @@ spawn_time = 2500
 spawn_fast = 1750
 spawn_fastest = 1250
 spawn_extreme = 750
-spawn_impossible = 450
+spawn_impossible = 500
+
+# define spawn enemy event, call it periodically
 SPAWNENEMY = pygame.USEREVENT
 pygame.time.set_timer(SPAWNENEMY, spawn_time)
-timenow = time.time()
+
+
+# define game over event
+GAME_OVER = pygame.USEREVENT
 
 
 
@@ -31,6 +36,7 @@ WHITE = (0, 255, 255)
 BLACK = (0, 0, 0)
 BROWN = (100, 100, 100)
 GREEN = (34, 177, 76)
+RUBY = (155, 17, 30)
 SPRITE_SHEET_BG = (192, 192, 192)
 
 # sprites size
@@ -46,6 +52,11 @@ pygame.display.set_caption('Ruby Sword')
 #get background image
 print(os.path.join('bg.png'))
 bg = pygame.transform.scale(pygame.image.load(os.path.join('bg.png')), (WIDTH, HEIGHT))
+
+# audio files
+missed_attack_audio = pygame.mixer.Sound('audio/missed_attack_audio.mp3')
+hit_audio = pygame.mixer.Sound('audio/hit_audio.mp3')
+death_audio = pygame.mixer.Sound('audio/death_audio.mp3')
 
 
 # get default sprite images
@@ -83,6 +94,7 @@ class player(object):
             if self.attack:
                 #when attack is set to true (via spacebar) attack images are loaded and cycled through. images depend on which way self is facing
                 if self.facing_right and self.attack_frame < 15:
+                    
                     self.hitbox = (self.x + 60, self.y, 80, 80)
                     self.hurtbox = (self.x + 20, self.y, 40, 80)
                     image = attack_right[self.attack_frame//3]
@@ -129,8 +141,6 @@ class player(object):
                     screen.blit(default_sprite_left, (self.x, self.y))
 
         # set the hitbox for character on each redraw
-        pygame.draw.rect(screen, (255, 0, 0), (self.hitbox), 2)
-        pygame.draw.rect(screen, (0, 255, 0), (self.hurtbox), 2)
         self.hitbox = (self.x + 15, self.y, 50, 80)
         self.hurtbox = (self.x + 15, self.y, 50, 80)
 
@@ -180,12 +190,11 @@ class lizard(object):
         
         # set the hitbox for character on each redraw  
         self.hitbox = (self.x + 20, self.y, 40, 80)
-        pygame.draw.rect(screen, (255, 0, 0), (self.x + 20, self.y, 40, 80), 2)
 
         if not self.alive:
             del self
 
-
+# define list for lizards, this will hold all enemies after creation
 lizard_list = []
 
 #logic for checking hitbox collisions
@@ -194,27 +203,24 @@ def check_for_hit(sprite, enemy):
     # if start enemey hit box is less than end of sprite hit box and end of enemy hitbox is more than start of sprite hit box
     
     if sprite.attack and sprite.facing_right and enemy.hitbox[0] < sprite.hitbox[0] + 80 and enemy.hitbox[0] > sprite.hitbox[0] and sprite.y == enemy.y:       
-        pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)        
         enemy.alive = False
+        hit_audio.play()
     # if facing left and enemy hit box is more than end of sprite hitbox and less than start of sprite hitbox
     if sprite.attack and not sprite.facing_right and enemy.hitbox[0] > sprite.hitbox[0] - 80 and enemy.hitbox[0]  < sprite.hitbox[0] and sprite.y == enemy.y:
-        pygame.draw.rect(screen, (0, 0, 255), (enemy.x + 20, enemy.y, 40, 140), 5)      
         enemy.alive = False 
+        hit_audio.play()
     # if players hurt box is inside enemy, player loses
     if sprite.hurtbox[0] > enemy.hitbox[0] and sprite.hurtbox[0] < enemy.hitbox[0] + 40 and sprite.y == enemy.y:
         sprite.alive = False
+        death_audio.play()
     if sprite.hurtbox[0] + 50 > enemy.hitbox[0] and sprite.hurtbox[0] + 50 < enemy.hitbox[0] + 40 and sprite.y == enemy.y:
         sprite.alive = False
-
-        
-    
-
-    # elif not sprite.attack and sprite.x < green_lizard.x and sprite.x + (sprite.width) > green_lizard.x:
-    #     print('lose')
+        death_audio.play()
 
 
 
-sprite = player(200, HEIGHT - 80, 80, 80)   
+ 
+
 # import walking images
 walk_right = [pygame.image.load(os.path.join( 'walking','R_0.png')), pygame.image.load(os.path.join( 'walking','R_1.png')), pygame.image.load(os.path.join( 'walking','R_2.png')), 
             pygame.image.load(os.path.join( 'walking','R_3.png')), pygame.image.load(os.path.join( 'walking','R_4.png')),
@@ -256,10 +262,12 @@ def check_score():
             score += 1
     return score
 
+# declare fonts
 score_font = pygame.font.SysFont("bookmanoldstyle", 25)
 lose_font = pygame.font.SysFont("bookmanoldstyle", 40)
-title_font = pygame.font.SysFont("bookmanoldstyle", 60)
-intro_font = pygame.font.SysFont("bookmanoldstyle", 30)
+title_font = pygame.font.SysFont("bookmanoldstyle", 60, bold=True)
+intro_font = pygame.font.SysFont("bookmanoldstyle", 20, bold=True)
+instructions_font = pygame.font.SysFont("bookmanoldstyle", 15)
 
 #draw function will draw the screen and the players actions
 def draw_window(sprite, score, screen):
@@ -287,27 +295,32 @@ def draw_window(sprite, score, screen):
         
         lose_text = lose_font.render(f'Game over!', True, (255, 255, 255))
         final_score = lose_font.render(f'Final score: {str(score)}', True, (255, 255, 255))
+        back_to_intro = intro_font.render('Press any key to return', True, (255, 255, 255))
         screen.blit(lose_text, (280, 120))
         screen.blit(final_score, (260, 170))
-
-    if not game_start:
-        title_text = title_font.render('Ruby Sword', True, (255, 255, 255)) 
-        intro1_text = intro_font.render('The lizard race has taken over!')
-        intro2_text = intro_font.render('You have been gifted with the only weapon which can defeat them - the Ruby Sword')
-        enter_to_start_text = intro_font.render('Press enter to start...')
-        screen.blit(title_text, (250, 40))
-        screen.blit(intro1_text, (200, 120))
-        screen.blit(intro2_text, (160, 1700))
-        screen.blit(enter_to_start_text, (1210, 230))
+        screen.blit(back_to_intro, (272, 310))
+        
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                GAME_OVER
+                sprite.left = False
+                sprite.right = False
+                sprite.attack = False
+                lizard_list.clear()
+                sprite.alive = True
+                intro()
+            if event.type == pygame.QUIT:
+                pygame.quit()
 
     pygame.display.update()
 
 
 
-# define inital enemy
-# green_lizard = lizard(351 , HEIGHT - 80, 80, 80)
+# create player
+sprite = player(200, HEIGHT - 80, 80, 80)  
 
-# create more enemies, this is called whenever SPAWNENEMY event is triggered
+# create  enemies, this is called whenever SPAWNENEMY event is triggered
 # 3 types of spawns, left side, right side, or both sides. decided by randomiser each time. 
 # spawn speed increases as amount of kills grows
 def create_enemy():
@@ -341,6 +354,7 @@ def main():
     run = True
     clock = pygame.time.Clock()
     
+    
     #main loop for running the game
     while run:
         clock = pygame.time.Clock()
@@ -359,6 +373,10 @@ def main():
                 create_enemy()
                 print(score)
 
+            if event.type == GAME_OVER:
+                if not sprite.alive:
+                    print('game over')
+                    run = False
     
         # sprite_movement(keys_pressed, player)
         # left and right flags are used for walk animations
@@ -379,6 +397,7 @@ def main():
                 elif pygame.key.name(event.key) == 'space':
                     sprite.attack_frame = 0
                     sprite.attack = True
+                    missed_attack_audio.play()
                     # sprite.right = False
                     # sprite.left = False
             elif event.type == KEYUP:
@@ -401,7 +420,36 @@ def main():
                 sprite.vel = 15
                 sprite.is_jump = False
 
+def intro():
+    intro = True
 
-main()
+    while intro:
+        screen.blit(bg, (0,0))
+        title_text = title_font.render('Ruby Sword', True, RUBY) 
+        intro1_text = intro_font.render('The lizard race has taken over!', True, RUBY)
+        intro2_text = intro_font.render('Only the holder of the Ruby Sword can slay them.', True, RUBY)
+        enter_to_start_text = instructions_font.render('Press enter to start, spacebar to attack, arrow keys to move/jump. ', True, (255, 255, 255))
+        screen.blit(title_text, (220, 10))
+        screen.blit(intro1_text, (240, 120))
+        screen.blit(intro2_text, (150, 155))
+        screen.blit(enter_to_start_text, (163, 300))
+
+        pygame.display.update()
+        clock = pygame.time.Clock()
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            
+            if event.type == KEYDOWN:
+                if pygame.key.name(event.key) == 'return':
+                    main()
+                    intro = False
+                    
+                    pygame.display.update()
+
+
+intro()
 
 
