@@ -1,2 +1,2 @@
 # Ruby-Sword
-Small scale platformer game being made using pygame, final project for cs50.
+Small scale platformer game made using pygame, final project for cs50.
